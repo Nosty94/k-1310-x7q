@@ -425,12 +425,20 @@
   .final-line{font-family:var(--font-display);font-size:23px;margin:16px 0 0;min-height:30px;}
   .burst{position:fixed;left:50%;top:42%;z-index:79;color:#f08aa8;pointer-events:none;opacity:0;animation:burst 2.6s ease-out forwards;}
   @keyframes burst{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}15%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1)}}
+  .btn.btn-ghost{background:none;box-shadow:none;color:var(--gold-soft);font-weight:500;padding:10px 18px;text-decoration:underline;text-underline-offset:4px;}
+  .theme-paper .btn.btn-ghost{color:var(--brick);}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#190812">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body class="theme-dark">
 <div class="heart-layer" id="heart-layer" aria-hidden="true"></div>
 <div class="progress" id="progress"></div>
-<button class="music-toggle" id="music-toggle" aria-label="Музыка вкл/выкл">🔊</button>
+
 <div class="sound-hint" id="sound-hint" aria-live="polite">🔈 нажми где угодно, чтобы включить звук</div>
 <div class="stage">
 
@@ -461,7 +469,7 @@
 
   <section class="screen" id="s-q2">
     <div class="riddle-step">вопрос 2 из 3</div>
-    <h2>Какой фильм мы смотрели дольше всего?</h2>
+    <h2>Какой фильм/сериал мы смотрели дольше всего?</h2>
     <input class="riddle-input" id="in-q2" type="text" placeholder="впиши название" aria-label="Ответ на вопрос 2" autocomplete="off">
     <div class="riddle-error" id="err-q2" aria-live="polite"></div>
     <div class="riddle-hint" id="xhint-q2" aria-live="polite"></div>
@@ -622,6 +630,7 @@
   // ====== CINEMATIC UI ACCENTS ======
   let uiAudioCtx = null;
   function playUiAccent(kind='open'){
+    return; // звуки нажатий отключены
     try{
       uiAudioCtx = uiAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
       if(uiAudioCtx.state === 'suspended') uiAudioCtx.resume();
@@ -774,6 +783,7 @@
     document.body.classList.toggle('theme-dark', DARK_SCREENS.includes(id));
     document.body.classList.toggle('theme-paper', !DARK_SCREENS.includes(id));
     document.body.classList.toggle('final-scene', id === 'closing');
+    document.querySelector('meta[name=theme-color]').setAttribute('content', DARK_SCREENS.includes(id) ? '#190812' : '#fff4f4');
     window.scrollTo(0,0);
 
     currentScreenId = id;
@@ -800,6 +810,7 @@
     coverEnv.querySelector('.envelope').classList.add('open');
     playUiAccent('open'); playFilmFlash();
     startMusicFromGesture();
+    tryFullscreen();
     setTimeout(() => goTo('q1'), 1000);
   }
   coverEnv.addEventListener('click', openCover);
@@ -1052,6 +1063,10 @@ ${text}`);
   document.getElementById('copy-btn').style.display = 'none';
 
   // ====== V2 ADDITIONS ======
+  function tryFullscreen(){
+    const el=document.documentElement, f=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(f){ try{ const pr=f.call(el,{navigationUI:'hide'}); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){} }
+  }
   function plural(n,a,b,c){ n=Math.abs(n)%100; const m=n%10; if(n>10&&n<20) return c; if(m>1&&m<5) return b; if(m===1) return a; return c; }
 
   function updateProgress(id){
@@ -1061,11 +1076,6 @@ ${text}`);
   }
 
   // Кнопка музыки + пауза, когда вкладка скрыта
-  const mBtn=document.getElementById('music-toggle');
-  mBtn.addEventListener('click', async ()=>{
-    if(musicOn){ musicOn=false; mBtn.textContent='🔇'; await fadeVolume(0,400); musicPlayer.pause(); }
-    else{ musicOn=true; mBtn.textContent='🔊'; musicPlayer.muted=false; playSlideMusic(currentScreenId,true); }
-  });
   let wasPlaying=false;
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){ wasPlaying=!musicPlayer.paused; musicPlayer.pause(); }
