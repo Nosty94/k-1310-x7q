@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, interactive-widget=resizes-content">
 <title>Котенку — 13.10</title>
 <meta name="robots" content="noindex,nofollow">
 <meta property="og:title" content="Котенку — 13.10">
@@ -448,6 +448,7 @@
   @keyframes ldFill{to{fill-opacity:.95;}}
   @keyframes ldBeat{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
   @keyframes ldBar{0%{transform:translateX(-100%);}100%{transform:translateX(350%);}}
+  body.kb-open .screen{justify-content:flex-start;padding-top:20px;padding-bottom:calc(24px + var(--kb,0px));}
 </style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#190812">
@@ -1091,6 +1092,25 @@ ${text}`);
 
   // init: hide fallback elements by default
   document.getElementById('copy-btn').style.display = 'none';
+
+  // Клавиатура на телефоне: поле ввода и кнопка не должны прятаться под ней
+  (function(){
+    const vv=window.visualViewport, touch='ontouchstart' in window;
+    function reveal(){
+      const el=document.activeElement;
+      if(!el||!/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
+      setTimeout(()=>el.scrollIntoView({block:'center',behavior:'smooth'}),300);
+    }
+    document.addEventListener('focusin',reveal);
+    if(vv && touch){
+      vv.addEventListener('resize',()=>{
+        const kb=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+        document.documentElement.style.setProperty('--kb',kb+'px');
+        document.body.classList.toggle('kb-open', vv.height < screen.height*0.75);
+        reveal();
+      });
+    }
+  })();
 
   // ====== V2 ADDITIONS ======
   function tryFullscreen(){
